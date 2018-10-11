@@ -1,5 +1,5 @@
 # PHP Mysql Dump
-使用第三方php类库MySQLDump将数据库导出为sql文件存在服务器上
+使用第三方php类库[ifsnop/mysqldump-php](https://github.com/ifsnop/mysqldump-php)将数据库导出为sql文件存在服务器上
 
 ## 使用说明
 - 下载所需要文件Mysqldump.php , index.php , .htaccess。
