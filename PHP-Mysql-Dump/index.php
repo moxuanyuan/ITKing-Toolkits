@@ -13,6 +13,8 @@ $backup_keep_day=15;
 /* 数据库参数 */
 $db_user='';
 $db_password='';
+
+// $db_name 可以是字符串(单个数据库)，也可以是数组(多个数据库)
 $db_name='';
  
 /* 以下非必要参数 */
@@ -26,13 +28,11 @@ $db_name='';
 // $exclude_tables = array();
  
 
-$filename='db_'.$db_name.'_'.date('YmdHis');
-
 if(isset($_GET['access_key']) && $_GET['access_key']==$access_key)
 {
     $directory=dirname(__FILE__); 
 
-    $gzs=glob("*.gz");
+    $gzs=glob("*.sql.gz");
 
     if(is_array($gzs))
     {
@@ -62,13 +62,20 @@ if(isset($_GET['access_key']) && $_GET['access_key']==$access_key)
     !empty($exclude_tables) && ($$dumpSettings['exclude-tables']=$exclude_tables);
 
     try {
-        $dump = new IMysqldump\Mysqldump(
-            "mysql:host={$db_host};dbname={$db_name}",
-            $db_user,
-            $db_password,
-            $dumpSettings
-        );
-        $dump->start($filename.'.sql.gz');
+
+        !is_array($db_name) && ($db_name=array($db_name));
+
+        foreach($db_name as $v)
+        {
+            $filename='db_'.$v.'_'.date('YmdHis');
+            $dump = new IMysqldump\Mysqldump(
+                "mysql:host={$db_host};dbname={$v}",
+                $db_user,
+                $db_password,
+                $dumpSettings
+            );
+            $dump->start($filename.'.sql.gz');
+        }
     } catch (\Exception $e) {
         echo 'mysqldump-php error: ' . $e->getMessage();
     }
