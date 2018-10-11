@@ -76,6 +76,8 @@ if(isset($_GET['access_key']) && $_GET['access_key']==$access_key)
             );
             $dump->start($filename.'.sql.gz');
         }
+        
+        echo 'success as '.date('Y-m-d H:i:s');
     } catch (\Exception $e) {
         echo 'mysqldump-php error: ' . $e->getMessage();
     }
