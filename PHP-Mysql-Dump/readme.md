@@ -9,6 +9,6 @@
 - 检查是否在目录"DBbackup"生成了db_dbname_时间.sql.gz，则备份成功。
 
 ## 备用方案
-如果首选方案不能用，例如php 版本低于5.3、数据库太大导出超时等等，可以试试备用方案。下载alternative目录下 dumper.php , index.php , .htaccess，使用方法跟首选方案一样
+如果首选方案不能用，例如php 版本低于5.3、数据库太大导出超时等等，可以试试备用方案，在第三方php类库[2createStudio/shuttle-export](https://github.com/2createStudio/shuttle-export)基础上，进行了小部分修改。下载alternative目录下 dumper.php , index.php , .htaccess，使用方法跟首选方案一样
 
 ## 检查备份文件是否正确
