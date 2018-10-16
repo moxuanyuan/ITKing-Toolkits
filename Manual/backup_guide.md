@@ -8,7 +8,7 @@
 ## Server Backup Script
 ### 使用方法
 1. 数据库备份
-方法请看<https://github.com/moxuanyuan/ITKing-Toolkits/tree/master/PHP-Mysql-Dump>
+    方法请看<https://github.com/moxuanyuan/ITKing-Toolkits/tree/master/PHP-Mysql-Dump>
 1. 配置
 预设专用备份机为Synology
 - 创建项目配置文件，以项目名称作为配置文件名，内容参考**sample.cfg**，必须注意，配置文件必须使用linux 换行符
