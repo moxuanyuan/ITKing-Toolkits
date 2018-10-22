@@ -84,7 +84,7 @@ runBackup () {
 
     cd $logPath
 
-    rm -f "${projectName}_*.tar.gz"
+    rm -f ${projectName}_*.tar.gz
 
     tar -czvf "${projectName}_$(date +%Y-%m-%d-%H-%M-%S).tar.gz" "${projectName}.log" "${projectName}.wget.log" --remove-files
 
