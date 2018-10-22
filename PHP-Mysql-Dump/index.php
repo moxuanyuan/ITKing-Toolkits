@@ -4,34 +4,12 @@ use Ifsnop\Mysqldump as IMysqldump;
 @date_default_timezone_set('Asia/Shanghai');
 @set_time_limit(0);
 
-/* access_key用作简单的访问控制 */
-$access_key='';
+$directory=dirname(__FILE__); 
 
-/* 备份保留天数，整数，默认15天 */
-$backup_keep_day=15;
-
-/* 数据库参数 */
-$db_user='';
-$db_password='';
-
-// $db_name 可以是字符串(单个数据库)，也可以是数组(多个数据库)
-$db_name='';
- 
-/* 以下非必要参数 */
-
-//$db_host='';
-
-/* 只需要备份的Tables */
-//$include_tables=array();
-
-/* 不需要备份的Tables */
-// $exclude_tables = array();
- 
+include_once("{$directory}/config.php"); 
 
 if(isset($_GET['access_key']) && $_GET['access_key']==$access_key)
 {
-    $directory=dirname(__FILE__); 
-
     $gzs=glob("*.sql.gz");
 
     if(is_array($gzs))
@@ -46,38 +24,87 @@ if(isset($_GET['access_key']) && $_GET['access_key']==$access_key)
                @unlink($filepath); 
             }
         }
-    } 
+    }
+    
+    empty($db_host) && ($db_host='localhost');
 
-    include_once($directory."/Mysqldump.php"); 
+    if(empty($db_name))
+    {
+        $db_name=array();
+
+        $exclude_dbs=array('mysql','performance_schema','information_schema');
+
+        if (class_exists('mysqli')) { 
+
+            $conn = @new MySQLi($db_host, $db_user, $db_password);
+
+            $res = $conn->query('SHOW DATABASES');
+
+            if($res->num_rows > 0)
+            {
+                while($row = $res->fetch_assoc())
+                {
+                    $db_name[]=$row['Database'];
+                }
+            }
+
+            $conn->close();
+
+		} else {
+
+            $conn = @mysql_connect($db_host, $db_user, $db_password);
+
+            $res = mysql_query('SHOW DATABASES');
+
+            if(mysql_num_rows($res) > 0)
+            {
+                while($row = mysql_fetch_assoc($res))
+                {
+                    $db_name[]=$row['Database'];
+                }
+            }
+
+            mysql_close($conn);
+        }
+        
+        if(empty($db_name)) exit;
+
+        $db_name=array_diff($db_name,$exclude_dbs);
+
+    }else
+    {
+        !is_array($db_name) && ($db_name=array($db_name));
+    }
+
+    include_once("{$directory}/Mysqldump.php"); 
     
     $dumpSettings = array( 
         'compress' => IMysqldump\Mysqldump::GZIP,
         'add-drop-table'=>true
     );
 
-    empty($db_host) && ($db_host='localhost');
-
     !empty($include_tables) && ($$dumpSettings['include-tables']=$include_tables);
 
     !empty($exclude_tables) && ($$dumpSettings['exclude-tables']=$exclude_tables);
 
     try {
-
-        !is_array($db_name) && ($db_name=array($db_name));
-
+ 
         foreach($db_name as $v)
         {
             $filename='db_'.$v.'_'.date('YmdHis');
+
             $dump = new IMysqldump\Mysqldump(
                 "mysql:host={$db_host};dbname={$v}",
                 $db_user,
                 $db_password,
                 $dumpSettings
             );
+            
             $dump->start($filename.'.sql.gz');
         }
         
         echo 'success as '.date('Y-m-d H:i:s');
+
     } catch (\Exception $e) {
         echo 'mysqldump-php error: ' . $e->getMessage();
     }
