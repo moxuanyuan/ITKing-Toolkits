@@ -1,1 +1,5 @@
 RedirectMatch 403 ^/.+\.(gz|sql)$
+
+<IfModule mod_expires.c> 
+    ExpiresActive Off
+</IfModule> 

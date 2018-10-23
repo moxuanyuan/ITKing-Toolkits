@@ -60,7 +60,6 @@ runBackup () {
         ftpFolder=""
     fi
 
-
     if [ ! -z "$ftpMode" ] && [ "$(trim $ftpMode)" = "port" ] ; then
         ftpPassiveMode="--no-passive-ftp"
     else
@@ -69,6 +68,7 @@ runBackup () {
     fi
 
     if [ ! -z "$ftpProgram" ] && [ "$(trim $ftpProgram)" = "lftp" ] ; then
+    
         echo "lftp" > $processFile
 
         echo -e "lftp start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
