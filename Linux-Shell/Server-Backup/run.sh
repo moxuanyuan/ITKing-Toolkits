@@ -60,40 +60,49 @@ runBackup () {
         ftpFolder=""
     fi
 
-    if [ ! -z "$ftpMode" ] && [ "$(trim $ftpMode)" = "port" ] ; then
-        ftpPassiveMode="--no-passive-ftp"
-    else
-      
-        ftpPassiveMode=""
-    fi
+    if [ ! -z "$ftpProgram" ] && [ "$(trim $ftpProgram)" = "wget" ] ; then
 
-    if [ ! -z "$ftpProgram" ] && [ "$(trim $ftpProgram)" = "lftp" ] ; then
-    
-        echo "lftp" > $processFile
-
-        echo -e "lftp start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
-
-        lftp -f "
-        open $ftpHost
-        user $ftpUser $ftpPassword
-        lcd $ftpFolder
-        mirror --delete --verbose $ftpFolder $projectPath
-        bye
-        "
-        echo -e "lftp finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
-
-    else
+        if [ ! -z "$ftpMode" ] && [ "$(trim $ftpMode)" = "port" ] ; then
+            ftpPassiveMode="--no-passive-ftp"
+        else
+            ftpPassiveMode=""
+        fi
 
         echo "wget" > $processFile
 
         echo -e "Wget start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
 
-        wget -m -nH $ftpPassiveMode --ftp-user=$ftpUser --ftp-password=$ftpPassword "ftp://$ftpHost$ftpFolder/*" -P $projectPath -o $wgetLogFile
+        wget -m -nH $ftpPassiveMode --ftp-user=$ftpUser --ftp-password=$ftpPassword "ftp://$ftpHost$ftpFolder/*" -P $projectPath -o $getFileLog
 
         echo -e "Wget finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+
+    else
+
+        if [ ! -z "$ftpMode" ] && [ "$(trim $ftpMode)" = "port" ] ; then
+            ftpPassiveMode = 0
+        else
+            ftpPassiveMode = 1
+        fi
+
+        if [ -z "$ftpParallel" ] ; then
+            ftpParallel = 3
+        fi
+
+        echo "lftp" > $processFile
+
+        echo -e "lftp start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+
+        lftp -f "
+        set ftp:passive-mode $ftpPassiveMode
+        open $ftpHost
+        user $ftpUser $ftpPassword
+        lcd $ftpFolder
+        mirror --delete --verbose --continue --use-pget-n=$ftpParallel --log=$getFileLog $ftpFolder $projectPath
+        bye
+        "
+        echo -e "lftp finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
         
     fi
-
 
     finishTime=$(date +%Y-%m-%d-%H-%M-%S)
 
@@ -122,11 +131,7 @@ errorExit () {
 
     echo "at $(date +%Y-%m-%d-%H-%M-%S)" >> $errorLogFile
 
-    echo -e $1"\n" >> $errorLogFile
-
-    logFile="$logPath/${projectName}.log"
-
-    wgetLogFile="$logPath/${projectName}.wget.log"
+    echo -e $1"\n" >> $errorLogFile 
 
     if [[ -f "$logFile" ]]; then
         echo "$logFile" >> $errorLogFile
@@ -137,13 +142,13 @@ errorExit () {
         rm $logFile
     fi
 
-    if [[ -f "$wgetLogFile" ]]; then
-        echo "$wgetLogFile" >> $errorLogFile
+    if [[ -f "$getFileLog" ]]; then
+        echo "$getFileLog" >> $errorLogFile
         echo "================================" >> $errorLogFile
-        catFile=`cat $wgetLogFile`
+        catFile=`cat $getFileLog`
         echo -e "${catFile}" >> $errorLogFile
         echo "================================" >> $errorLogFile
-        rm $wgetLogFile
+        rm $getFileLog
     fi
 
     rm $processFile
@@ -219,7 +224,13 @@ if [ "$files" != "0" ] ; then
 
     configFile=`ls *.cfg | head -1`
 
-    projectName="${configFile:0:-4}"
+    projectName="${configFile:0:-4}" 
+
+    logFile="$logPath/${projectName}.log"
+
+    getFileLog="$logPath/${projectName}.file.log"
+
+    processFile="$logPath/${projectName}.process"
 
     # 加载配置文件
     source "${runQueue}/${configFile}"
@@ -254,12 +265,6 @@ if [ "$files" != "0" ] ; then
     mkdir -p $projectPath
 
     lastBackupTimeFile="$projectPath/_lastBackupTime";
-
-    logFile="$logPath/${projectName}.log"
-
-    wgetLogFile="$logPath/${projectName}.wget.log"
-
-    processFile="$logPath/${projectName}.process"
 
     if [[ ! -f "$processFile" ]]; then
 
@@ -315,30 +320,31 @@ if [ "$files" != "0" ] ; then
 
                     logFileModifiedTime=$(date -r $logFile +%s)
 
-                    if [ $((nowTime - logFileModifiedTime)) -ge 1800 ]; then
+                    if [ $((nowTime - logFileModifiedTime)) -ge 3600 ]; then
                         errorExit "$process error"
                     fi
                 fi
                 ;;
 
+            lftp);&
             wget)
-                if [[ -f "$wgetLogFile" ]]; then
+                if [[ -f "$getFileLog" ]]; then
 
-                    wgetLogFileModifiedTime=$(date -r $wgetLogFile +%s)
+                    getFileLogModifiedTime=$(date -r $getFileLog +%s)
 
-                    if [ $((nowTime - wgetLogFileModifiedTime)) -ge 1800 ]; then
-                        errorExit "wget error"
+                    if [ $((nowTime - getFileLogModifiedTime)) -ge 3600 ]; then
+                        errorExit "get file error"
                     fi
                 else
 
                     logFileModifiedTime=$(date -r $logFile +%s)
 
-                    if [ $((nowTime - logFileModifiedTime)) -ge 1800 ]; then
+                    if [ $((nowTime - logFileModifiedTime)) -ge 3600 ]; then
                         errorExit "wget error"
                     fi
                 fi
                 ;;
-            *) rm $processFile;;
+            *) rm $processFile ;;
         esac
 
     fi
