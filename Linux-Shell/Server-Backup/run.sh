@@ -94,6 +94,7 @@ runBackup () {
 
         lftp -f "
         set ftp:passive-mode $ftpPassiveMode
+        set ftp:list-options -a
         open $ftpHost
         user $ftpUser $ftpPassword
         lcd $ftpFolder
