@@ -68,13 +68,32 @@ runBackup () {
         ftpPassiveMode=""
     fi
 
-    echo "wget" > $processFile
+    if [ ! -z "$ftpProgram" ] && [ "$(trim $ftpProgram)" = "lftp" ] ; then
+        echo "lftp" > $processFile
 
-    echo -e "Wget start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+        echo -e "lftp start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
 
-    wget -m -nH $ftpPassiveMode --ftp-user=$ftpUser --ftp-password=$ftpPassword "ftp://$ftpHost$ftpFolder/*" -P $projectPath -o $wgetLogFile
+        lftp -f "
+        open $ftpHost
+        user $ftpUser $ftpPassword
+        lcd $ftpFolder
+        mirror --delete --verbose $ftpFolder $projectPath
+        bye
+        "
+        echo -e "lftp finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
 
-    echo -e "Wget finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+    else
+
+        echo "wget" > $processFile
+
+        echo -e "Wget start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+
+        wget -m -nH $ftpPassiveMode --ftp-user=$ftpUser --ftp-password=$ftpPassword "ftp://$ftpHost$ftpFolder/*" -P $projectPath -o $wgetLogFile
+
+        echo -e "Wget finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+        
+    fi
+
 
     finishTime=$(date +%Y-%m-%d-%H-%M-%S)
 
@@ -324,5 +343,3 @@ if [ "$files" != "0" ] ; then
 
     fi
 fi
-
-
