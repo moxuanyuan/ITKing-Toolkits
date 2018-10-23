@@ -114,7 +114,7 @@ runBackup () {
 
     rm -f ${projectName}_*.tar.gz
 
-    tar -czvf "${projectName}_$(date +%Y-%m-%d-%H-%M-%S).tar.gz" "${projectName}.log" "${projectName}.wget.log" --remove-files
+    tar -czvf "${projectName}_$(date +%Y-%m-%d-%H-%M-%S).tar.gz" $logFile $getFileLog --remove-files
 
     # 备份完成，从队列中删除
 
