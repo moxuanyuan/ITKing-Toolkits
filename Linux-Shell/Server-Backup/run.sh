@@ -58,8 +58,8 @@ runBackup () {
 
     if [ "$ftpFolder" = "/" ] ;then
         ftpFolder=""
-    fi
-
+    fi 
+    
     if [ ! -z "$ftpProgram" ] && [ "$(trim $ftpProgram)" = "wget" ] ; then
 
         if [ ! -z "$ftpMode" ] && [ "$(trim $ftpMode)" = "port" ] ; then
@@ -79,14 +79,17 @@ runBackup () {
     else
 
         if [ ! -z "$ftpMode" ] && [ "$(trim $ftpMode)" = "port" ] ; then
-            ftpPassiveMode = 0
+
+            ftpPassiveMode=0
+            
         else
-            ftpPassiveMode = 1
-        fi
+
+            ftpPassiveMode=1
+        fi 
 
         if [ -z "$ftpParallel" ] ; then
-            ftpParallel = 3
-        fi
+            ftpParallel=3
+        fi  
 
         echo "lftp" > $processFile
 
@@ -95,10 +98,11 @@ runBackup () {
         lftp -f "
         set ftp:passive-mode $ftpPassiveMode
         set ftp:list-options -a
+        set mirror:use-pget-n 2
         open $ftpHost
         user $ftpUser $ftpPassword
         lcd $ftpFolder
-        mirror --delete --verbose --continue --use-pget-n=$ftpParallel --log=$getFileLog $ftpFolder $projectPath
+        mirror --delete --verbose --continue --parallel=$ftpParallel --log=$getFileLog $ftpFolder $projectPath
         bye
         "
         echo -e "lftp finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
@@ -113,9 +117,9 @@ runBackup () {
 
     cd $logPath
 
-    rm -f ${projectName}_*.tar.gz
+    rm -f ${projectName}_*.tar.gz 
 
-    tar -czvf "${projectName}_$(date +%Y-%m-%d-%H-%M-%S).tar.gz" $logFile $getFileLog --remove-files
+    tar -czvf "${projectName}_$(date +%Y-%m-%d-%H-%M-%S).tar.gz" "${projectName}.file.log" "${projectName}.log" --remove-files
 
     # 备份完成，从队列中删除
 
