@@ -27,9 +27,8 @@
     - 如果备份完成，会生成备分记录 **xxxx_YYYY-mm-dd-HH-MM-SS.tar**
 
 ### 检查
-- 进入数据库备份的目录，解压备份文件，打开其中的sql文件，检查最后一行是否为 : `-- Dump completed on: .............`，则表示数据库备份成功
+- 进入数据库备份的目录，下载备份文件，解压备份文件，打开其中的sql文件，检查最后一行是否为 : `-- Dump completed on: .............`，则表示数据库备份成功
 - 再进入备份服务器的folder **"ServerBackup" -> "log"**
-- 在log folder 目录查有 **xxxx.log** ， **xxxx.wget.log** ， **xxxx.process** ， 说明正在执行备份中
+- 在log folder 目录查有 **xxxx.log** ， **xxxx.file.log** ， **xxxx.process** ， 说明正在执行备份中
 - **xxxx_YYYY-mm-dd-HH-MM-SS.tar** 文件是项目的备分记录，从文件名可得知最近备份时间
-- 打开 **xxxx_YYYY-mm-dd-HH-MM-SS.tar** ，里面会有两个log文件 ， **xxxx.log** ， **xxxx.wget.log** ，**xxxx.log** 是备份流程的简单记录，**xxxx.wget.log**是文件下载的记录。
-- 打开 **xxxx.wget.log** 检查最后一行是否为 : `Downloaded: ..........` ，则表示文件备份成功
+- 打开 **xxxx_YYYY-mm-dd-HH-MM-SS.tar** ，里面会有两个log文件 ，**xxxx.log** 是备份流程的简单记录，**xxxx.file.log**是文件下载的记录。
