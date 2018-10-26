@@ -93,20 +93,23 @@ runBackup () {
 
         if [ ! -z "$ftpProtocol" ] && [ "$(trim $ftpProtocol)" = "sftp" ] ; then
 
-            ftpProtocol="sftp"
+            ftpProtocol="sftp://"
 
             sftpSetting="
                 set ssl:verify-certificate no
                 set sftp:auto-confirm yes
             "
-            
         else
 
-            ftpProtocol="ftp"
+            ftpProtocol=""
 
             sftpSetting=""
 
         fi 
+
+        if [ -z "$lftpSetting" ] ; then
+            lftpSetting=""
+        fi   
 
         echo "lftp" > $processFile
 
@@ -115,9 +118,10 @@ runBackup () {
         lftp -f "
         set ftp:passive-mode $ftpPassiveMode
         set ftp:list-options -a
-        set mirror:use-pget-n 2
-        $sftpSetting
-        open $ftpProtocol://$ftpHost
+        set mirror:use-pget-n 2 
+        $lftpSetting
+        $sftpSetting 
+        open $ftpProtocol$ftpHost
         user $ftpUser $ftpPassword
         lcd $ftpFolder
         mirror --delete --verbose --continue --parallel=$ftpParallel --log=$getFileLog $ftpFolder $projectPath
