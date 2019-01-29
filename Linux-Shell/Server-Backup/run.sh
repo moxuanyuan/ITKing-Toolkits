@@ -10,6 +10,8 @@ runQueue="$basePath/queue"
 
 logPath="$basePath/log"
 
+runLog="$logPath/run.log"
+
 mkdir -p $projectStore
 
 mkdir -p $configPath
@@ -19,6 +21,8 @@ mkdir -p $logPath
 mkdir -p "$logPath/queue"
 
 mkdir -p $runQueue
+
+echo "scritp start at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
 
 # Base Function
 
@@ -46,21 +50,25 @@ runBackup () {
 
         echo "dbBackup" > $processFile
 
+        echo "project [ ${projectName} ] Server DB Backup start at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
         echo -e "Server DB Backup start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
 
         wget --timeout=3600 --spider "$(trim $dbBackupUrl)"
 
         echo -e "Server DB Backup finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
 
+        echo "project [ ${projectName} ] Server DB Backup finish at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
     fi
 
     # 下载服务器的文件（FTP）
-
-    if [ "$ftpFolder" = "/" ] ;then
-        ftpFolder=""
-    fi 
     
     if [ ! -z "$ftpProgram" ] && [ "$(trim $ftpProgram)" = "wget" ] ; then
+    
+        if [ "$ftpFolder" = "/" ] ;then
+            ftpFolder=""
+        fi 
 
         if [ ! -z "$ftpMode" ] && [ "$(trim $ftpMode)" = "port" ] ; then
             ftpPassiveMode="--no-passive-ftp"
@@ -70,11 +78,15 @@ runBackup () {
 
         echo "wget" > $processFile
 
+        echo "project [ ${projectName} ] Wget start at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
         echo -e "Wget start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
 
         wget -m -nH $ftpPassiveMode --ftp-user=$ftpUser --ftp-password=$ftpPassword "ftp://$ftpHost$ftpFolder/*" -P $projectPath -o $getFileLog
 
         echo -e "Wget finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+
+        echo "project [ ${projectName} ] Wget finish at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
 
     else
 
@@ -113,6 +125,8 @@ runBackup () {
 
         echo "lftp" > $processFile
 
+        echo "project [ ${projectName} ] lftp start at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
         echo -e "lftp start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
 
         lftp -f "
@@ -124,10 +138,12 @@ runBackup () {
         open $ftpProtocol$ftpHost
         user $ftpUser $ftpPassword
         lcd $ftpFolder
-        mirror --delete --verbose --continue --parallel=$ftpParallel --log=$getFileLog $ftpFolder $projectPath
+        mirror --delete --verbose --continue --parallel=$ftpParallel --log=$getFileLog '${ftpFolder}' '$projectPath'
         bye
         "
         echo -e "lftp finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+
+        echo "project [ ${projectName} ] lftp finish at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
         
     fi
 
@@ -148,6 +164,8 @@ runBackup () {
     rm $processFile
 
     rm "${runQueue}/${configFile}"
+
+    echo "project [ ${projectName} ] Backup finish at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
 }
 
 errorExit () {
@@ -182,7 +200,12 @@ errorExit () {
 
     rm "${runQueue}/${configFile}"
 
-    exit 1
+    if [ "$1" != "" ] ; then
+
+        echo "project [ ${projectName} ] error exit at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
+        exit 1
+    fi
 }
 
 #每天需要备份的任务
@@ -190,6 +213,8 @@ errorExit () {
 queueLogFile="$logPath/queue/$(date +%Y%m%d).log"
 
 if [[ ! -f "$queueLogFile" ]]; then
+
+    echo "queueLogFile at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
 
     cd $configPath
 
@@ -257,7 +282,8 @@ if [ "$files" != "0" ] ; then
 
     getFileLog="$logPath/${projectName}.file.log"
 
-    processFile="$logPath/${projectName}.process"
+    #processFile="$logPath/${projectName}.process"
+    processFile="$logPath/process"
 
     # 加载配置文件
     source "${runQueue}/${configFile}"
@@ -295,6 +321,8 @@ if [ "$files" != "0" ] ; then
 
     if [[ ! -f "$processFile" ]]; then
 
+        echo "project [ ${projectName} ] backup start at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
         echo "start" > $processFile
 
         echo -e "Backup start at $(date +%Y-%m-%d-%H-%M-%S) \n" > $logFile
@@ -307,6 +335,8 @@ if [ "$files" != "0" ] ; then
 
         	if [[ -f "$lastBackupTimeFile" ]]; then
 
+                echo "project [ ${projectName} ] archive last backup start at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+                
         	    echo "archive" > $processFile
 
         	    echo -e "Archive last backup start at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
@@ -320,6 +350,8 @@ if [ "$files" != "0" ] ; then
         	    tar -zcvf "${historyPath}/${projectName}_${lastBackupTime}.tar.gz" .
 
         	    echo -e "Archive last backup finish at $(date +%Y-%m-%d-%H-%M-%S) \n" >> $logFile
+
+                echo "project [ ${projectName} ] archive last backup finish at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
         	fi
 
         	archiveNum=`find ${historyPath} -name "${projectName}_*.tar.gz" | wc -l | sed 's/\ //g'`
@@ -335,6 +367,9 @@ if [ "$files" != "0" ] ; then
         runBackup
 
     else
+
+        echo "project [ ${projectName} ] processFile is exit at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
         nowTime=$(date +%s)
 
         process=`cat $processFile`
@@ -347,7 +382,7 @@ if [ "$files" != "0" ] ; then
 
                     logFileModifiedTime=$(date -r $logFile +%s)
 
-                    if [ $((nowTime - logFileModifiedTime)) -ge 3600 ]; then
+                    if [ $((nowTime - logFileModifiedTime)) -ge 7200 ]; then
                         errorExit "$process error"
                     fi
                 fi
@@ -355,20 +390,41 @@ if [ "$files" != "0" ] ; then
 
             lftp);&
             wget)
+
                 if [[ -f "$getFileLog" ]]; then
 
-                    getFileLogModifiedTime=$(date -r $getFileLog +%s)
+                    logTime=$(date -r $getFileLog +%s)
 
-                    if [ $((nowTime - getFileLogModifiedTime)) -ge 3600 ]; then
-                        errorExit "get file error"
-                    fi
                 else
 
-                    logFileModifiedTime=$(date -r $logFile +%s)
+                    logTime=$(date -r $logFile +%s)
+ 
+                fi
 
-                    if [ $((nowTime - logFileModifiedTime)) -ge 3600 ]; then
-                        errorExit "wget error"
+                if [ $((nowTime - logTime)) -ge 10800 ]; then
+
+                    tryFile="${projectName}.try"
+
+                    if [[ -f "$tryFile" ]]; then
+                        retries=`cat $tryFile`
+                    else
+                        retries=0
                     fi
+
+                    if [ $retries -ge 2 ]; then
+
+                        errorExit
+
+                        echo "kill process at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
+                        ps -ef | grep $process | grep -v grep | cut -c 9-15 | xargs kill -s 9 
+                        
+                    else
+
+                        echo "try at $(date +%Y-%m-%d-%H-%M-%S)" >> $runLog
+
+                        echo `expr $retries + 1` > $tryFile
+                    fi 
                 fi
                 ;;
             *) rm $processFile ;;
