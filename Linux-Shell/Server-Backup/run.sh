@@ -8,6 +8,8 @@ configPath="$basePath/config"
 
 runQueue="$basePath/queue"
 
+tryQueue="$basePath/try"
+
 logPath="$basePath/log"
 
 runLog="$basePath/run.log"
@@ -25,6 +27,8 @@ mkdir -p $logPath
 mkdir -p "$logPath/queue"
 
 mkdir -p $runQueue
+
+mkdir -p $tryQueue
 
 echo "$(date +"%Y-%m-%d %H:%M:%S") scritp start " >> $runLog
 
@@ -208,6 +212,8 @@ errorExit () {
     rm $processFile
     
     rm $waitFile
+
+    cp -rf "${runQueue}/${configFile}" $tryQueue
 
     rm "${runQueue}/${configFile}"
 
@@ -444,4 +450,21 @@ if [ "$files" != "0" ] ; then
         esac
 
     fi
+
+else
+
+    cd $tryQueue
+
+    files=$(ls *.cfg 2> /dev/null | wc -l)
+
+    if [ "$files" != "0" ] ; then
+
+        tryCfg=`ls *.cfg -tr | head -1`
+
+        cp -rf "${tryQueue}/${tryCfg}" $runQueue
+
+        rm "${tryQueue}/${tryCfg}"
+
+    fi
+
 fi
