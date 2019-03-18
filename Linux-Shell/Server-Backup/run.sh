@@ -468,3 +468,10 @@ else
     fi
 
 fi
+
+# 每月1号20点20分，删除30天前的queue log
+if [ "$(date +"%d%H%M")" == "012020" ] ; then
+
+    find "${logPath}/queue" -mmin +43200 -type f | xargs rm -f
+
+fi
