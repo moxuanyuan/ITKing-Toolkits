@@ -465,13 +465,22 @@ else
 
         rm "${tryQueue}/${tryCfg}"
 
+    else
+
+        # 每月1号20点20分，执行
+        # 删除30天前的queue log
+        # 重置run.log
+        if [ "$(date +"%d%H%M")" == "012020" ] ; then
+
+        find "${logPath}/queue" -mmin +43200 -type f | xargs rm -f
+
+        cp -rf $runLog "${runLog}.bak"
+
+        echo "" > $runLog
+
+        fi
+
     fi
 
 fi
 
-# 每月1号20点20分，删除30天前的queue log
-if [ "$(date +"%d%H%M")" == "012020" ] ; then
-
-    find "${logPath}/queue" -mmin +43200 -type f | xargs rm -f
-
-fi
